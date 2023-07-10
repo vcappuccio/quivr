@@ -6,10 +6,16 @@ from models.brains import Brain
 from models.settings import common_dependencies
 from models.users import User
 
+from routes.permissions.has_brain_authorization import (
+    has_brain_authorization,
+    validate_brain_authorization,
+)
+
 explore_router = APIRouter()
 
 
 @explore_router.get("/explore/", dependencies=[Depends(AuthBearer())], tags=["Explore"])
+@has_brain_authorization()
 async def explore_endpoint(
     brain_id: UUID = Query(..., description="The ID of the brain"),
     current_user: User = Depends(get_current_user),
@@ -27,6 +33,7 @@ async def explore_endpoint(
 @explore_router.delete(
     "/explore/{file_name}/", dependencies=[Depends(AuthBearer())], tags=["Explore"]
 )
+@has_brain_authorization()
 async def delete_endpoint(
     file_name: str,
     current_user: User = Depends(get_current_user),
@@ -66,4 +73,16 @@ async def download_endpoint(
         .execute()
     )
     documents = response.data
+
+    if len(documents) == 0:
+        return {"documents": []}
+
+    related_brain_id = UUID(documents[0]["brain_id"])
+    if related_brain_id is None:
+        raise Exception(
+            f"File {file_name} has no brain_id associated with it. Please contact support."
+        )
+
+    validate_brain_authorization(brain_id=related_brain_id)
+
     return {"documents": documents}
