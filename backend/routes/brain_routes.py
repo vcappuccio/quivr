@@ -9,6 +9,8 @@ from models.settings import common_dependencies
 from models.users import User
 from pydantic import BaseModel
 
+from routes.permissions.has_brain_authorization import has_brain_authorization
+
 logger = get_logger(__name__)
 
 brain_router = APIRouter()
@@ -75,6 +77,7 @@ async def get_default_brain_endpoint(current_user: User = Depends(get_current_us
 @brain_router.get(
     "/brains/{brain_id}/", dependencies=[Depends(AuthBearer())], tags=["Brain"]
 )
+@has_brain_authorization()
 async def get_brain_endpoint(brain_id: UUID):
     """
     Retrieve details of a specific brain by brain ID.
@@ -101,6 +104,7 @@ async def get_brain_endpoint(brain_id: UUID):
 @brain_router.delete(
     "/brains/{brain_id}/", dependencies=[Depends(AuthBearer())], tags=["Brain"]
 )
+@has_brain_authorization()
 async def delete_brain_endpoint(
     brain_id: UUID,
     current_user: User = Depends(get_current_user),
@@ -169,6 +173,7 @@ async def create_brain_endpoint(
 @brain_router.put(
     "/brains/{brain_id}/", dependencies=[Depends(AuthBearer())], tags=["Brain"]
 )
+@has_brain_authorization()
 async def update_brain_endpoint(
     brain_id: UUID,
     input_brain: Brain,
